@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SIT AL-BIRUNI MANDIRI MAKASSAR</title>
+
+  <style>
+    body {
+      background-color: #008000;
+      font-family: Arial, sans-serif;
+      color: white;
+      text-align: center;
+    }
+
+    h1 {color: #06b6d4;}
+
+    .card{
+      background:#0b1220;
+      padding: 20px;
+      border-radius: 12px;
+      width: 85%;
+      margin:auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    }
+
+    input, button{
+      padding:5px;
+      margin:5px;
+    }
+
+    table{
+      background:white;
+      color:black;
+      width:100%;
+      margin-top:10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>Login Admin</h2>
+
+<input id="user" placeholder="Username">
+<input id="pass" type="password" placeholder="Password">
+
+<button onclick="login()">Login</button>
+
+<p id="loginStatus"></p>
+<hr>
+
+<div id="dashboard" style="display:none;">
+
+<div class="card">
+
+<h1>Dashboard Sekolah</h1>
+
+<h3>Input Data Siswa</h3>
+
+<input id="nama" placeholder="Nama / NIS">
+<input id="kelas" placeholder="Kelas">
+
+<br>
+<button onclick="simpanData()">Simpan</button>
+<button onclick="batalEdit()">Batal</button>
+
+<h3>Daftar Siswa</h3>
+
+<table border="1">
+<thead>
+<tr>
+  <th>No</th>
+  <th>Nama</th>
+  <th>Kelas</th>
+  <th>Aksi</th>
+</tr>
+</thead>
+
+<tbody id="tabelSiswa"></tbody>
+</table>
+
+<hr>
+
+<h3>SCAN QR / BARCODE</h3>
+<div id="reader" style="width:300px;margin:auto;"></div>
+
+</div>
+</div>
+
+<!-- QR SCANNER -->
+<script src="https://unpkg.com/html5-qrcode@2.3.10/minified/html5-qrcode.min.js"></script>
+
+<script>
+
+let editIndex=null;
+
+/* ========= LOGIN ========= */
+function login(){
+  let user=document.getElementById("user").value;
+  let pass=document.getElementById("pass").value;
+
+  if(user==="admin" && pass==="12345"){
+    document.getElementById("loginStatus").innerHTML="✅ Login berhasil";
+    document.getElementById("dashboard").style.display="block";
+    
+    tampilkanData();
+    mulaiScan();   // scanner baru aktif setelah login
+  }
+  else{
+    document.getElementById("loginStatus").innerHTML="❌ Login gagal";
+  }
+}
+
+/* ========= DATABASE ========= */
+
+function getData(){
+  return JSON.parse(localStorage.getItem("siswa")) || [];
+}
+
+function saveData(data){
+  localStorage.setItem("siswa",JSON.stringify(data));
+}
+
+/* ========= CRUD SISWA ========= */
+
+function tampilkanData(){
+
+  let tbody=document.getElementById("tabelSiswa");
+  tbody.innerHTML="";
+
+  let data=getData();
+
+  data.forEach((item,index)=>{
+
+    let row=tbody.insertRow();
+
+    row.insertCell(0).innerText=index+1;
+    row.insertCell(1).innerText=item.nama;
+    row.insertCell(2).innerText=item.kelas;
+
+    row.insertCell(3).innerHTML =
+      `<button onclick="editData(${index})">✏️</button>
+       <button onclick="hapusData(${index})">❌</button>`;
+  });
+
+}
+
+function simpanData(){
+
+  let nama=document.getElementById("nama").value;
+  let kelas=document.getElementById("kelas").value;
+
+  if(nama==="" || kelas===""){
+    alert("Lengkapi data!");
+    return;
+  }
+
+  let data=getData();
+
+  if(editIndex!==null){
+    data[editIndex]={nama, kelas};
+    editIndex=null;
+  } else {
+    data.push({nama, kelas});
+  }
+
+  saveData(data);
+  batalEdit();
+  tampilkanData();
+}
+
+function editData(index){
+
+  let data=getData();
+
+  document.getElementById("nama").value=data[index].nama;
+  document.getElementById("kelas").value=data[index].kelas;
+
+  editIndex=index;
+}
+
+function hapusData(index){
+
+  let data=getData();
+
+  data.splice(index,1);
+
+  saveData(data);
+  tampilkanData();
+}
+
+function batalEdit(){
+
+  document.getElementById("nama").value="";
+  document.getElementById("kelas").value="";
+  editIndex=null;
+
+}
+
+/* ========= QR SCANNER ========= */
+
+function mulaiScan(){
+
+  const qr = new Html5Qrcode("reader");
+
+  qr.start(
+      { facingMode: "environment" },
+      { fps:10, qrbox:250 },
+
+      (kode)=>{
+
+        document.getElementById("nama").value = kode;
+
+        alert("Barcode terbaca:\n" + kode);
+
+      }
+  );
+}
+
+</script>
+
+</body>
+</html>
